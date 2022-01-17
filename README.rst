@@ -4,6 +4,7 @@ pyramid_cloudflare_access
 Introduction
 ------------
 
+This package contains Pyramid package that can is used to verify requests behind Cloudflare Team Access.
 
 Installation
 ------------
