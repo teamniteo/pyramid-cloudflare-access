@@ -1,7 +1,11 @@
 """Tests for HerokuappAccess tween."""
 
 from pyramid import testing
+from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid_cloudflare_access import CloudflareAccess
+
+import pytest
 
 # Taken from example at https://pyjwt.readthedocs.io/en/latest/usage.html#retrieve-rsa-signing-keys-from-a-jwks-endpoint
 sample_jwk = {
@@ -36,8 +40,14 @@ sample_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5FRTFRVVJCT1RNNE16
 sample_audience = "https://expenses-api"
 
 
-def test_happy_path(tween_handler, mocker):
-    """Test that JWT token is parsed."""
+@pytest.mark.freeze_time("2017-05-21")
+def test_happy_path(mocker) -> None:
+    """Test that JWT token is parsed and authorized."""
+
+    mocker.patch(
+        "pyramid_cloudflare_access.PyJWKClient.fetch_data", return_value=sample_jwk
+    )
+    tween_handler = mocker.Mock()
 
     request = testing.DummyRequest()
     request.cookies = {"CF_Authorization": sample_token}
@@ -46,33 +56,40 @@ def test_happy_path(tween_handler, mocker):
         "pyramid_cloudflare_access.team": "auth0",
     }
 
-    CloudflareAccess(tween_handler.handler, request.registry)(request)
-    tween_handler.handler.assert_called_with(request)
+    CloudflareAccess(tween_handler, request.registry)(request)
+    tween_handler.assert_called_with(request)
 
 
-def test_missing_cookie(tween_handler, mocker):
+def test_missing_cookie(mocker) -> None:
     """Test that access is denied on wrong request."""
-    mocker.patch("pyramid_cloudflare_access.PyJWK.fetch_data", return_value=sample_jwk)
+
+    mocker.patch(
+        "pyramid_cloudflare_access.PyJWKClient.fetch_data", return_value=sample_jwk
+    )
+    tween_handler = mocker.Mock()
+
+    request = testing.DummyRequest()
+    request.registry.settings = {
+        "pyramid_cloudflare_access.policy_audience": sample_audience,
+        "pyramid_cloudflare_access.team": "auth0",
+    }
+    with pytest.raises(HTTPBadRequest):
+        CloudflareAccess(tween_handler, request.registry)(request)
+
+
+def test_auth_failed(mocker) -> None:
+    """Test that access is denied on expired auth."""
+
+    mocker.patch(
+        "pyramid_cloudflare_access.PyJWKClient.fetch_data", return_value=sample_jwk
+    )
+    tween_handler = mocker.Mock()
+
     request = testing.DummyRequest()
     request.cookies = {"CF_Authorization": sample_token}
     request.registry.settings = {
         "pyramid_cloudflare_access.policy_audience": sample_audience,
         "pyramid_cloudflare_access.team": "auth0",
     }
-
-    CloudflareAccess(tween_handler.handler, request.registry)(request)
-    tween_handler.handler.assert_called_with(request)
-
-
-def test_auth_failed(tween_handler, mocker):
-    """Test that access is denied on wrong request."""
-    mocker.patch("pyramid_cloudflare_access.PyJWK.fetch_data", return_value=sample_jwk)
-    request = testing.DummyRequest()
-    request.cookies = {"CF_Authorization": sample_token}
-    request.registry.settings = {
-        "pyramid_cloudflare_access.policy_audience": sample_audience,
-        "pyramid_cloudflare_access.team": "auth0",
-    }
-
-    CloudflareAccess(tween_handler.handler, request.registry)(request)
-    tween_handler.handler.assert_called_with(request)
+    with pytest.raises(HTTPForbidden):
+        CloudflareAccess(tween_handler, request.registry)(request)

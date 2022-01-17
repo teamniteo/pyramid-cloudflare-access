@@ -29,19 +29,18 @@ keywords = [ "pyramid", "cloudflare", "pylons", "web" ]
 python = ">=3.6"
 pyramid = ">=1.7"
 pyjwt = "*"
+cryptography = "*"
 
 [tool.poetry.dev-dependencies]
 typecov = "*"
-structlog = "*"
-responses = "*"
 pytest-mock = "*"
 pytest-cov = "*"
 pytest = "*"
 mypy = "*"
 mock = "*"
 isort = "*"
-docutils = "*"
 black = "*"
 autoflake = "*"
 "zope.testing" = "*"
+pytest-freezegun = "*"
 
