@@ -1,0 +1,38 @@
+*.wp[ru]
+*.py[oc]
+
+.DS_Store
+
+.Python
+# Packages
+*.egg
+*.egg-info
+dist
+man
+local
+eggs
+var
+sdist
+pip-selfcheck.json
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Translations
+*.mo
+
+coverage.xml
+.pytest_cache/
+htmlcov/
+.venv/
+
+#mypy
+.mypy_cache/*
+typecov/
+
+#Editors & IDEs
+.vscode/
