@@ -11,7 +11,7 @@ import pyramid.httpexceptions as exc
 import typing as t
 
 
-def includeme(config: Configurator):
+def includeme(config: Configurator) -> None:  # pragma: no cover
     # as possibly first tween in chain, order does not matter
     config.add_tween("pyramid_cloudflare_access.CloudflareAccess", over=INGRESS)
 
@@ -32,32 +32,36 @@ class CloudflareAccess:
 
     def __init__(self, handler, registry):
         settings = getattr(registry, "settings", {})
+        self.handler = handler
         self.policy_audience = settings["pyramid_cloudflare_access.policy_audience"]
         self.public_keys = _get_public_keys(settings["pyramid_cloudflare_access.team"])
 
-    def valid_request(self, request: Request) -> bool:
+    def authenticated_request(self, request: Request) -> bool:
         token = request.cookies.get("CF_Authorization")
 
         if not token:
             raise exc.HTTPBadRequest()
 
         # Loop through the keys since we can't pass the key set to the decoder
-        token_valid = False
-        for key in self.public_keys:
+        for signing_key in self.public_keys:
             try:
                 # decode returns the claims and verifies token against public keys
                 claims = jwt_decode(
-                    token, key=key, audience=self.policy_audience, algorithms=["RS256"]
+                    token,
+                    key=signing_key.key,
+                    audience=self.policy_audience,
+                    algorithms=["RS256"],
                 )
-                token_valid = claims is not None
+                return claims is not None
             except:
                 pass
 
-        return token_valid
+        return False
 
     def __call__(self, request: Request):
 
-        if not self.valid_request(request):
+        if not self.authenticated_request(request):
             raise exc.HTTPForbidden()
 
+        # Continue with processing requests
         return self.handler(request)

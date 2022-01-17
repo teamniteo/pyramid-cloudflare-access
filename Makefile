@@ -8,24 +8,15 @@ all: tests
 all = false
 
 .PHONY: lint
-lint: types
-# 1. get all unstaged modified files
-# 2. get all staged modified files
-# 3. get all untracked files
-# 4. run pre-commit checks on them
-ifeq ($(all),true)
-	@pre-commit run --hook-stage push --all-files
-else
-	@{ git diff --name-only ./; git diff --name-only --staged ./;git ls-files --other --exclude-standard; } \
-			| sort | uniq | sed 's|backend/||' \
-			| xargs pre-commit run --hook-stage push --files
-endif
+lint:
+	@black --diff .
+	@isort --diff --check-only -rc .
 
 .PHONY: types
 types:
-	@mypy src/pareto
+	@mypy pyramid_cloudflare_access 
 	@cat ./typecov/linecount.txt
-	@command typecov 100 ./typecov/linecount.txt
+	@command typecov 90 ./typecov/linecount.txt
 
 
 # anything, in regex-speak
@@ -40,9 +31,9 @@ ifdef path
 	full_suite = "false"
 endif
 args = ""
-pytest_args = -k $(filter) $(args) --ignore=src/pareto/tests/browser
+pytest_args = -k $(filter) $(args)
 ifeq ($(args),"")
-	pytest_args = -k $(filter) --ignore=src/pareto/tests/browser
+	pytest_args = -k $(filter)
 endif
 verbosity = ""
 ifeq ($(full_suite),"false")
@@ -50,16 +41,13 @@ ifeq ($(full_suite),"false")
 endif
 full_suite_args = ""
 ifeq ($(full_suite),"true")
-	full_suite_args = --durations 10 --cov=pareto --cov-branch --cov-report html --cov-report xml:cov.xml --cov-report term-missing --cov-fail-under=100
+	full_suite_args = --durations 10 --cov=pyramid_cloudflare_access --cov-branch --cov-report html --cov-report xml:cov.xml --cov-report term-missing --cov-fail-under=100
 endif
 
 .PHONY: unit
 unit:
-ifeq ($(full_suite),"true")
-	@python -m pareto.scripts.drop_tables -c etc/test.ini
-endif
 ifndef path
-	@pytest src/pareto $(verbosity) $(full_suite_args) $(pytest_args)
+	@pytest pyramid_cloudflare_access $(verbosity) $(full_suite_args) $(pytest_args)
 else
 	@pytest $(path)
 endif
