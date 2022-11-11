@@ -34,3 +34,6 @@ jobs:
 
       - name: Test
         run: poetry run make unit
+
+      - name: Upload to BlueRacer
+        run: bash <(curl -s https://app.blueracer.io/upload)
