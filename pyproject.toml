@@ -26,8 +26,8 @@ homepage = "https://github.com/teamniteo/pyramid_cloudflare_access"
 keywords = [ "pyramid", "cloudflare", "pylons", "web" ]
 
 [tool.poetry.dependencies]
-python = ">=3.6"
-pyramid = ">=1.7"
+python = ">=3.9"
+pyramid = ">=1.7, <2.0"
 pyjwt = "*"
 cryptography = "*"
 
