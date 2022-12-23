@@ -14,6 +14,7 @@ eggs
 var
 sdist
 pip-selfcheck.json
+cov.xml
 
 # Installer logs
 pip-log.txt

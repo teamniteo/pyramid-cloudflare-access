@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: 3.9
       - uses: Gr1N/setup-poetry@v7
-      - run: poetry update
+      - run: poetry lock
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         id: cpr
