@@ -40,7 +40,7 @@ sample_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5FRTFRVVJCT1RNNE16
 sample_audience = "https://expenses-api"
 
 
-@pytest.mark.freeze_time("2017-05-21")
+@pytest.mark.freeze_time("2019-10-25 12:36:00")
 def test_happy_path(mocker) -> None:
     """Test that JWT token is parsed and authorized."""
 
@@ -53,7 +53,7 @@ def test_happy_path(mocker) -> None:
     request.cookies = {"CF_Authorization": sample_token}
     request.registry.settings = {
         "pyramid_cloudflare_access.policy_audience": sample_audience,
-        "pyramid_cloudflare_access.team": "auth0",
+        "pyramid_cloudflare_access.team": "https://foo.cloudflareaccess.com",
     }
 
     CloudflareAccess(tween_handler, request.registry)(request)
@@ -71,7 +71,7 @@ def test_missing_cookie(mocker) -> None:
     request = testing.DummyRequest()
     request.registry.settings = {
         "pyramid_cloudflare_access.policy_audience": sample_audience,
-        "pyramid_cloudflare_access.team": "auth0",
+        "pyramid_cloudflare_access.team": "https://foo.cloudflareaccess.com",
     }
     with pytest.raises(HTTPBadRequest):
         CloudflareAccess(tween_handler, request.registry)(request)
@@ -89,7 +89,27 @@ def test_auth_failed(mocker) -> None:
     request.cookies = {"CF_Authorization": sample_token}
     request.registry.settings = {
         "pyramid_cloudflare_access.policy_audience": sample_audience,
-        "pyramid_cloudflare_access.team": "auth0",
+        "pyramid_cloudflare_access.team": "https://foo.cloudflareaccess.com",
     }
     with pytest.raises(HTTPForbidden):
         CloudflareAccess(tween_handler, request.registry)(request)
+
+def test_herokuapp(mocker) -> None:
+    """Test that Cloudflare Access is skipped for Heroku-hosted apps.
+
+    This is to support Review Apps that have dynamic *.herokuapp.com hostname,
+    that cannot be configured as a domain for Cloudflare Access application
+    in Cloudflare dashboard.
+    """
+    tween_handler = mocker.Mock()
+    
+    request = testing.DummyRequest()
+    request.cookies = {}
+    request.registry.settings = {
+        "pyramid_cloudflare_access.policy_audience": sample_audience,
+        "pyramid_cloudflare_access.team": "https://foo.cloudflareaccess.com",
+    }
+    request.headers['Host'] = "foo.herokuapp.com"
+
+    CloudflareAccess(tween_handler, request.registry)(request)
+    tween_handler.assert_called_with(request)

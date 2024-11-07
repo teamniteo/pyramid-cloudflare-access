@@ -41,7 +41,7 @@ ifeq ($(full_suite),"false")
 endif
 full_suite_args = ""
 ifeq ($(full_suite),"true")
-	full_suite_args = --junitxml junit.xml --durations 10 --cov=pyramid_cloudflare_access --cov-branch --cov-report html --cov-report xml:cov.xml --cov-report term-missing --cov-fail-under=100
+	full_suite_args = --cov=pyramid_cloudflare_access --cov-branch --cov-report html --cov-report xml:cov.xml --cov-report term-missing --cov-fail-under=100
 endif
 
 .PHONY: unit

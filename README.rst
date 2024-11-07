@@ -23,6 +23,7 @@ Compatibility
 pyramid_cloudflare_access runs with pyramid>=1.7 and python>=3.6.
 Other versions might also work.
 
+Heroku Review Apps deployed on `*.herokuapp.com` subdomains automatically skip the cloudflare access check as their domains are dynamic and as such can't be configured in Cloudflare dashboard in advance. 
 
 Usage
 -----
