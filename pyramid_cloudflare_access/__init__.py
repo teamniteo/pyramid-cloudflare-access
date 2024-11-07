@@ -60,6 +60,10 @@ class CloudflareAccess:
 
     def __call__(self, request: Request):
 
+        # Support for Heroku Review apps
+        if "herokuapp.com" in request.headers.get("Host", ""):
+            return self.handler(request)
+            
         if not self.authenticated_request(request):
             raise exc.HTTPForbidden()
 
